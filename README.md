@@ -97,19 +97,11 @@ El firmware se organiza como una **máquina de estados** con cinco estados princ
 ## Estructura del repositorio
 
 ```
-RealSteel/
+SumoBot-RealSteel/
 ├── src/
-│   └── SumoBot_NanoEvery.ino    # Firmware principal
-├── docs/
-│   ├── diagrama_conexiones.md    # Diagrama de cableado
-│   ├── maquina_estados.md        # Documentación de la lógica
-│   └── calibracion.md            # Guía de calibración
-├── hardware/
-│   ├── lista_componentes.md      # BOM (Bill of Materials)
-│   ├── esquematico/              # Esquemáticos del circuito
-│   └── chasis/                   # Diseños 3D / planos del chasis
-├── README.md
-└── LICENSE
+│   └── SumoBot-RealSteel.ino    # Firmware principal
+├── LICENSE
+└── README.md
 ```
 
 ---
