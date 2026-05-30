@@ -100,6 +100,9 @@ El firmware se organiza como una **máquina de estados** con cinco estados princ
 SumoBot-RealSteel/
 ├── src/
 │   └── SumoBot-RealSteel.ino    # Firmware principal
+├── hardware/
+│   └── stl/
+│       └── SumoBot RealSteel.stl # Modelos 3D del chasis
 ├── LICENSE
 └── README.md
 ```
