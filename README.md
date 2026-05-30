@@ -1,10 +1,10 @@
 # RealSteel
 
-**Sumobot autónomo basado en Arduino Nano Every**
+**Mini sumobot autónomo basado en Arduino Nano Every**
 
 RealSteel es un robot de combate tipo *mini-sumo* desarrollado como proyecto educativo. Su objetivo es detectar a un oponente dentro de un dohyo, atacarlo y empujarlo fuera del ring, evitando al mismo tiempo salirse del borde blanco que delimita el área de combate.
 
-El robot está construido sobre un Arduino Nano Every y utiliza una máquina de estados sencilla para alternar entre búsqueda, ataque y evasión de borde. La lógica está inspirada en el proyecto *SumoBot Profesional RoboCup DGETI 2026*, adaptada a un hardware más accesible.
+El robot está construido sobre un Arduino Nano Every y utiliza una máquina de estados sencilla para alternar entre búsqueda, ataque y evasión de borde. La lógica está inspirada en el proyecto *Mini SumoBot Profesional RoboCup DGETI 2026*, adaptada a un hardware más accesible.
 
 ---
 
@@ -18,9 +18,11 @@ El robot está construido sobre un Arduino Nano Every y utiliza una máquina de 
 | 1 | HC-SR04 | Sensor ultrasónico frontal (detección de oponente) |
 | 2 | QTR-1A | Sensores de línea analógicos (detección de borde) |
 
-### Asignación de pines
+---
 
-**TB6612FNG (Puente H)**
+## Asignación de pines
+
+### TB6612FNG (Puente H)
 
 | Señal | Pin Nano Every |
 |---|---|
@@ -32,7 +34,7 @@ El robot está construido sobre un Arduino Nano Every y utiliza una máquina de 
 | PWMB | 5 |
 | STBY | 6 |
 
-**Sensores**
+### Sensores
 
 | Sensor | Señal | Pin Nano Every |
 |---|---|---|
@@ -41,7 +43,7 @@ El robot está construido sobre un Arduino Nano Every y utiliza una máquina de 
 | HC-SR04 | Trig | D9 |
 | HC-SR04 | Echo | D10 |
 
-Los QTR-1A están montados en las **esquinas delanteras** del chasis (uno izquierdo, uno derecho), separados al ancho máximo posible. Esto permite no solo detectar el borde, sino también identificar *de qué lado* se está acercando para evadirlo en diagonal hacia el centro del dohyo.
+Los QTR-1A están montados en las **esquinas delanteras** del chasis, separados al máximo posible para mejorar la detección de borde y permitir evasión direccional.
 
 ---
 
@@ -49,48 +51,78 @@ Los QTR-1A están montados en las **esquinas delanteras** del chasis (uno izquie
 
 El firmware se organiza como una **máquina de estados** con cinco estados principales:
 
-1. **INICIAL** – Configuración de pines y calibración automática de los QTR-1A. El robot debe colocarse sobre el dohyo (negro) al encender; el umbral de borde se calcula a partir de esa lectura.
-2. **GIRO_INICIAL** – Al arrancar, el robot ejecuta un giro de 540° (1.5 vueltas) en sentido horario para desorientar al oponente y escanear el dohyo. Si durante el giro detecta al oponente con el HC-SR04, corta el giro y pasa directamente al ataque.
-3. **BUSCANDO** – Gira lentamente escaneando con el ultrasónico. Si detecta un objeto a menos de 40 cm pasa a ataque. Si algún QTR ve borde, pasa a evasión.
-4. **ATACANDO** – Avanza a máxima velocidad mientras siga viendo al oponente. Si lo pierde, regresa a búsqueda.
-5. **EVADIENDO_BORDE** – Retrocede brevemente y gira hacia el lado contrario al sensor que detectó el borde. Si ambos sensores ven blanco simultáneamente, ejecuta un giro de aproximadamente 180°.
+1. **INICIAL**  
+   Configuración de pines y calibración automática de los QTR-1A. El robot debe encenderse sobre el dohyo (superficie negra) para obtener una calibración correcta.
 
-**Prioridad de eventos:** la detección de borde siempre tiene prioridad sobre la detección de oponente, para evitar autoexpulsiones.
+2. **GIRO_INICIAL**  
+   El robot realiza un giro de 540° (1.5 vueltas) para escanear el entorno.  
+   Si detecta un oponente durante el giro, pasa directamente a ataque.
 
-### Dohyo asumido
+3. **BUSCANDO**  
+   Gira lentamente mientras escanea con el HC-SR04.  
+   Si detecta un objeto dentro del rango, cambia a ataque.  
+   Si detecta borde, prioriza evasión.
+
+4. **ATACANDO**  
+   Avanza a máxima velocidad hacia el objetivo mientras lo detecte.  
+   Si lo pierde, regresa a búsqueda.
+
+5. **EVADIENDO_BORDE**  
+   Retrocede brevemente y gira hacia el lado opuesto al sensor que detectó el borde.  
+   Si ambos sensores detectan borde, ejecuta un giro de 180°.
+
+---
+
+### Prioridad de eventos
+
+La detección de borde siempre tiene prioridad sobre la detección de oponente para evitar la expulsión del dohyo.
+
+---
+
+## Dohyo asumido
 
 - Superficie: **negra**
 - Borde: **blanco**
-- Formato: mini-sumo estándar
+- Formato: **mini-sumo estándar**
 
-### Parámetros configurables (en el código)
+---
 
-- `UMBRAL_DETECCION_CM` – Distancia máxima de detección del HC-SR04 (40 cm por defecto)
-- `MS_POR_GRADO` – Calibración del tiempo de giro de los motores
-- `VEL_GIRO_INICIAL`, `VEL_BUSCANDO`, `VEL_ATACAR`, `VEL_EVADIR` – Velocidades PWM (0–255)
-- `DURACION_RETROCESO_MS`, `DURACION_GIRO_EVASION_MS` – Tiempos de la maniobra de evasión
+## Parámetros configurables
+
+- `UMBRAL_DETECCION_CM` → distancia de detección del HC-SR04 (default: 40 cm)
+- `MS_POR_GRADO` → calibración de giro de motores
+- `VEL_GIRO_INICIAL`
+- `VEL_BUSCANDO`
+- `VEL_ATACAR`
+- `VEL_EVADIR`
+- `DURACION_RETROCESO_MS`
+- `DURACION_GIRO_EVASION_MS`
 
 ---
 
 ## Estado actual del desarrollo
 
-🟢 **En desarrollo / fase de pruebas**
+🟢 En desarrollo / fase de pruebas
 
-- [x] Lógica base de máquina de estados implementada
+- [x] Máquina de estados implementada
 - [x] Control de motores con TB6612FNG
-- [x] Lectura de HC-SR04 con timeout
-- [x] Calibración automática de los QTR-1A al arrancar
-- [x] Maniobra de evasión direccional según sensor disparado
-- [x] Logs detallados por Serial (115200 baud) para depuración
-- [ ] Calibración fina de `MS_POR_GRADO` con motores reales
-- [ ] Pruebas físicas sobre dohyo
-- [ ] Ajuste de velocidades y tiempos según comportamiento real
+- [x] Lectura HC-SR04 con timeout
+- [x] Calibración automática de QTR-1A
+- [x] Evasión direccional de borde
+- [x] Logs por Serial (115200 baud)
+- [ ] Calibración fina de `MS_POR_GRADO`
+- [ ] Pruebas físicas en dohyo
+- [ ] Ajuste de velocidades y tiempos
 - [ ] Versión no bloqueante del HC-SR04 (opcional)
-- [ ] Aleatorización del sentido de giro inicial (opcional)
+- [ ] Aleatorización de giro inicial (opcional)
 
-⚠️ **Notas importantes:**
-- Este proyecto es educativo, **no respeta la pausa reglamentaria de 5 segundos** de competencia oficial.
-- El robot debe encenderse sobre la superficie negra del dohyo para que la calibración automática de los QTR sea válida.
+---
+
+## Notas importantes
+
+- Proyecto educativo enfocado en **mini-sumo autónomo**
+- No implementa regla de pausa de 5 segundos de competencia oficial
+- Debe encenderse sobre el dohyo para calibración correcta
 
 ---
 
