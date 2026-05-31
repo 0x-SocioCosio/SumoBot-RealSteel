@@ -4,7 +4,7 @@
 
 RealSteel es un robot de combate tipo *mini-sumo* desarrollado como proyecto educativo. Su objetivo es detectar a un oponente dentro de un dohyo, atacarlo y empujarlo fuera del ring, evitando al mismo tiempo salirse del borde blanco que delimita el área de combate.
 
-El robot está construido sobre un Arduino Nano Every y utiliza una máquina de estados sencilla para alternar entre búsqueda, ataque y evasión de borde. La lógica está inspirada en el proyecto *Mini SumoBot Profesional RoboCup DGETI 2026*, adaptada a un hardware más accesible.
+El robot está construido sobre un Arduino Nano Every y utiliza una máquina de estados sencilla para alternar entre búsqueda, ataque y evasión de borde.
 
 ---
 
