@@ -1,102 +1,101 @@
 # RealSteel
 
-**Mini sumobot autónomo basado en Arduino Nano Every**
+**Mini sumobot autónomo basado en ESP32 DevKit**
 
 RealSteel es un robot de combate tipo *mini-sumo* desarrollado como proyecto educativo. Su objetivo es detectar a un oponente dentro de un dohyo, atacarlo y empujarlo fuera del ring, evitando al mismo tiempo salirse del borde blanco que delimita el área de combate.
 
-El robot está construido sobre un Arduino Nano Every y utiliza una máquina de estados sencilla para alternar entre búsqueda, ataque y evasión de borde.
+El robot está construido sobre un **ESP32 DevKit** y utiliza una estrategia reactiva basada en sensores para buscar oponentes, atacar y evitar abandonar el área de combate.
 
 ---
 
 ## Hardware
 
-| Cantidad | Componente | Función |
-|---|---|---|
-| 1 | Arduino Nano Every | Microcontrolador principal |
-| 1 | Driver TB6612FNG | Puente H para los dos motores |
-| 2 | Motor TT 5V (doble eje tipo "I") | Tracción diferencial |
-| 1 | HC-SR04 | Sensor ultrasónico frontal (detección de oponente) |
-| 2 | QTR-1A | Sensores de línea analógicos (detección de borde) |
+| Cantidad | Componente                       | Función                                                |
+| -------- | -------------------------------- | ------------------------------------------------------ |
+| 1        | ESP32 DevKit                     | Microcontrolador principal                             |
+| 1        | L298N                            | Driver de motores (puente H dual)                      |
+| 2        | Motor TT 5V (doble eje tipo "I") | Tracción diferencial                                   |
+| 1        | HC-SR04                          | Sensor ultrasónico frontal para detección de oponentes |
+| 2        | QTR                              | Sensores de línea para detección del borde del dohyo   |
 
 ---
 
 ## Asignación de pines
 
-### TB6612FNG (Puente H)
+### HC-SR04
 
-| Señal | Pin Nano Every |
-|---|---|
-| AIN1 | 4 |
-| AIN2 | 2 |
-| PWMA | 3 |
-| BIN1 | 7 |
-| BIN2 | 8 |
-| PWMB | 5 |
-| STBY | 6 |
+| Señal | Pin ESP32 |
+| ----- | --------- |
+| Trig  | GPIO 2    |
+| Echo  | GPIO 15   |
 
-### Sensores
+### Sensores QTR
 
-| Sensor | Señal | Pin Nano Every |
-|---|---|---|
-| QTR-1A izquierdo | OUT | A0 |
-| QTR-1A derecho | OUT | A1 |
-| HC-SR04 | Trig | D9 |
-| HC-SR04 | Echo | D10 |
+| Sensor        | Pin ESP32 |
+| ------------- | --------- |
+| QTR izquierdo | GPIO 13   |
+| QTR derecho   | GPIO 12   |
 
-Los QTR-1A están montados en las **esquinas delanteras** del chasis, separados al máximo posible para mejorar la detección de borde y permitir evasión direccional.
+### L298N
+
+| Señal | Pin ESP32 |
+| ----- | --------- |
+| ENA   | GPIO 32   |
+| IN1   | GPIO 33   |
+| IN2   | GPIO 25   |
+| IN3   | GPIO 26   |
+| IN4   | GPIO 27   |
+| ENB   | GPIO 14   |
+
+Los sensores QTR están montados en las esquinas delanteras del robot para detectar el borde del dohyo y permitir maniobras de evasión direccionales.
 
 ---
 
 ## Estrategia de funcionamiento
 
-El firmware se organiza como una **máquina de estados** con cinco estados principales:
+### 1. Buscar oponente
 
-1. **INICIAL**  
-   Configuración de pines y calibración automática de los QTR-1A. El robot debe encenderse sobre el dohyo (superficie negra) para obtener una calibración correcta.
+Cuando el sensor HC-SR04 no detecta ningún objeto dentro de la distancia configurada, el robot gira sobre su propio eje para localizar un adversario.
 
-2. **GIRO_INICIAL**  
-   El robot realiza un giro de 540° (1.5 vueltas) para escanear el entorno.  
-   Si detecta un oponente durante el giro, pasa directamente a ataque.
+### 2. Atacar
 
-3. **BUSCANDO**  
-   Gira lentamente mientras escanea con el HC-SR04.  
-   Si detecta un objeto dentro del rango, cambia a ataque.  
-   Si detecta borde, prioriza evasión.
+Si el HC-SR04 detecta un objeto dentro de la distancia de ataque, el robot avanza a máxima velocidad para intentar expulsarlo del dohyo.
 
-4. **ATACANDO**  
-   Avanza a máxima velocidad hacia el objetivo mientras lo detecte.  
-   Si lo pierde, regresa a búsqueda.
+### 3. Evitar salir del dohyo
 
-5. **EVADIENDO_BORDE**  
-   Retrocede brevemente y gira hacia el lado opuesto al sensor que detectó el borde.  
-   Si ambos sensores detectan borde, ejecuta un giro de 180°.
+Los sensores QTR monitorean continuamente el borde blanco del área de combate.
+
+* Si el sensor izquierdo detecta la línea blanca, el robot retrocede y gira hacia la derecha.
+* Si el sensor derecho detecta la línea blanca, el robot retrocede y gira hacia la izquierda.
+* Si ambos sensores detectan la línea blanca, el robot retrocede y realiza un giro más amplio para regresar al centro del dohyo.
+
+La detección de borde tiene prioridad sobre cualquier otra acción.
 
 ---
 
-### Prioridad de eventos
+## Prioridad de acciones
 
-La detección de borde siempre tiene prioridad sobre la detección de oponente para evitar la expulsión del dohyo.
+1. Detección de línea blanca (QTR)
+2. Detección de oponente (HC-SR04)
+3. Búsqueda de oponente
+
+Este orden evita que el robot abandone el dohyo mientras persigue un objetivo.
 
 ---
 
 ## Dohyo asumido
 
-- Superficie: **negra**
-- Borde: **blanco**
-- Formato: **mini-sumo estándar**
+* Superficie: **negra**
+* Borde: **blanco**
+* Formato: **mini-sumo estándar**
 
 ---
 
 ## Parámetros configurables
 
-- `UMBRAL_DETECCION_CM` → distancia de detección del HC-SR04 (default: 40 cm)
-- `MS_POR_GRADO` → calibración de giro de motores
-- `VEL_GIRO_INICIAL`
-- `VEL_BUSCANDO`
-- `VEL_ATACAR`
-- `VEL_EVADIR`
-- `DURACION_RETROCESO_MS`
-- `DURACION_GIRO_EVASION_MS`
+* `DISTANCIA_ATAQUE` → distancia máxima para iniciar el ataque (40 cm por defecto)
+
+Los tiempos de evasión y búsqueda pueden modificarse directamente dentro del código fuente según las necesidades de calibración del robot.
 
 ---
 
@@ -104,37 +103,42 @@ La detección de borde siempre tiene prioridad sobre la detección de oponente p
 
 🟢 En desarrollo / fase de pruebas
 
-- [x] Máquina de estados implementada
-- [x] Control de motores con TB6612FNG
-- [x] Lectura HC-SR04 con timeout
-- [x] Calibración automática de QTR-1A
-- [x] Evasión direccional de borde
-- [x] Logs por Serial (115200 baud)
-- [ ] Calibración fina de `MS_POR_GRADO`
-- [ ] Pruebas físicas en dohyo
-- [ ] Ajuste de velocidades y tiempos
-- [ ] Versión no bloqueante del HC-SR04 (opcional)
-- [ ] Aleatorización de giro inicial (opcional)
+* [x] Migración a ESP32 DevKit
+* [x] Control de motores mediante L298N
+* [x] Lectura del sensor HC-SR04
+* [x] Detección de borde mediante sensores QTR
+* [x] Búsqueda automática de oponentes
+* [x] Ataque automático al detectar objetivo
+* [x] Evasión de borde mediante sensores QTR
+* [x] Comunicación Serial para depuración
+* [ ] Ajuste fino de tiempos de evasión
+* [ ] Optimización de estrategia de combate
+* [ ] Pruebas físicas extensivas en dohyo
 
 ---
 
 ## Notas importantes
 
-- Proyecto educativo enfocado en **mini-sumo autónomo**
-- No implementa regla de pausa de 5 segundos de competencia oficial
-- Debe encenderse sobre el dohyo para calibración correcta
+* Proyecto educativo enfocado en robótica autónoma tipo mini-sumo.
+* El HC-SR04 se utiliza como sensor principal para localizar oponentes.
+* Los sensores QTR funcionan en modo digital:
+
+  * `1` = superficie negra.
+  * `0` = línea blanca.
+* El robot espera 5 segundos después del encendido antes de iniciar el combate.
+* La evasión de borde tiene prioridad sobre cualquier acción de ataque.
 
 ---
 
 ## Estructura del repositorio
 
-```
-SumoBot-RealSteel/
+```text
+RealSteel/
 ├── src/
-│   └── SumoBot-RealSteel.ino    # Firmware principal
+│   └── RealSteel.ino
 ├── hardware/
 │   └── stl/
-│       └── SumoBot RealSteel.stl # Modelos 3D del chasis
+│       └── RealSteel.stl
 ├── LICENSE
 └── README.md
 ```
@@ -145,4 +149,5 @@ SumoBot-RealSteel/
 
 **Demian Sánchez**
 
-Proyecto desarrollado con fines educativos y de aprendizaje en robótica autónoma, control de motores y máquinas de estados embebidas.
+Proyecto desarrollado con fines educativos y de aprendizaje en robótica autónoma, sensores, control de motores y sistemas embebidos.
+
